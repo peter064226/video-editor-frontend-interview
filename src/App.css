@@ -37,3 +37,27 @@
 .read-the-docs {
   color: #888;
 }
+.clip-drag {
+  display: flex;
+  justify-content: space-between;
+  height: 30px;
+  align-items: center;
+}
+div[class^="clip-drag-"] {
+  background-color: silver;
+  width: 10px;
+  height: 100%;
+  position: relative;
+  cursor: col-resize;
+}
+
+div[class^="clip-drag-"]:before {
+  background-color: white;
+  content: "";
+  display: block;
+  height: 10px;
+  width: 2px;
+  left: 4px;
+  top: 10px;
+  position: relative;
+}

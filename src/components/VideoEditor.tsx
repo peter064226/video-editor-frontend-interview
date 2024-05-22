@@ -7,6 +7,8 @@ type DataType = {
       content: string;
       start: number;
       end: number;
+      startNew: number;
+      endNew: number;
     };
   };
   tracks: {
@@ -21,29 +23,39 @@ const LIBRARY_ID = "library";
 const initialData: DataType = {
   clips: {
     "clip-1": {
-      content: "red",
+      content: "red.mp4",
       start: 1,
       end: 100,
+      startNew: 1,
+      endNew: 100,
     },
     "clip-2": {
-      content: "blue",
-      start: 200,
-      end: 300,
+      content: "blue.mp4",
+      start: 1,
+      end: 200,
+      startNew: 1,
+      endNew: 200,
     },
     "clip-3": {
-      content: "green",
-      start: 400,
-      end: 500,
+      content: "green.mp4",
+      start: 1,
+      end: 150,
+      startNew: 1,
+      endNew: 150,
     },
     "clip-4": {
-      content: "yellow",
-      start: 600,
-      end: 700,
+      content: "yellow.mp4",
+      start: 1,
+      end: 188,
+      startNew: 1,
+      endNew: 188,
     },
     "clip-2-0.8634497206492759": {
       content: "yellow",
-      start: 600,
-      end: 700,
+      start: 1,
+      end: 30,
+      startNew: 1,
+      endNew: 30,
     },
   },
   tracks: {
@@ -80,13 +92,44 @@ const VideoEditor = () => {
     ...initialData,
     tracks: generateEmptyTrack(initialData.tracks),
   });
+
+  const handler = (clipId: string, direction: "startNew" | "endNew") => {
+    function onMouseMove(mouseMoveEvent: MouseEvent) {
+      setData((data) => {
+        let newValue = data.clips[clipId][direction] + mouseMoveEvent.movementX;
+        if (direction === "startNew") {
+          const start = data.clips[clipId]["start"];
+          if (newValue < start) newValue = start;
+        } else {
+          const end = data.clips[clipId]["end"];
+          if (newValue > end) newValue = end;
+        }
+        return {
+          ...data,
+          clips: {
+            ...data.clips,
+            [clipId]: {
+              ...data.clips[clipId],
+              [direction]: newValue,
+            },
+          },
+        };
+      });
+    }
+    function onMouseUp() {
+      document.body.removeEventListener("mousemove", onMouseMove);
+    }
+
+    document.body.addEventListener("mousemove", onMouseMove);
+    document.body.addEventListener("mouseup", onMouseUp, { once: true });
+  };
+
   return (
     <div style={{ width: "80vw", padding: "20px", boxSizing: "border-box" }}>
       <h1>Video Editor Timeline</h1>
       <div style={{ display: "flex", width: "100%", gap: "10px" }}>
         <DragDropContext
           onDragEnd={(result) => {
-            console.log(result);
             const { destination, source } = result;
             let { draggableId } = result;
             if (!destination) return;
@@ -133,7 +176,7 @@ const VideoEditor = () => {
         >
           <div
             style={{
-              width: "20%",
+              width: "max-content",
               minHeight: "200px",
               border: "1px solid gray",
             }}
@@ -146,11 +189,10 @@ const VideoEditor = () => {
                     {(provided, snapshot) => (
                       <div
                         style={{
-                          padding: library.clips.length === 0 ? "2.5px" : "5px",
+                          padding: "8px",
                           background: `${
                             snapshot.isDraggingOver ? "lightgreen" : "white"
                           }`,
-                          height: "150px",
                         }}
                         {...provided.droppableProps}
                         ref={provided.innerRef}
@@ -176,13 +218,15 @@ const VideoEditor = () => {
                                         ? "lightblue"
                                         : "white"
                                     }`,
-                                    width: `${
-                                      data.clips[clipId].end -
-                                      data.clips[clipId].start
-                                    }px`,
+                                    width: "120px",
                                   }}
                                 >
-                                  {data.clips[clipId].content}
+                                  {data.clips[clipId].content}-
+                                  <span style={{ fontSize: "12px" }}>
+                                    {data.clips[clipId].end -
+                                      data.clips[clipId].start}
+                                    s
+                                  </span>
                                 </div>
                               </div>
                             )}
@@ -200,7 +244,7 @@ const VideoEditor = () => {
             style={{
               border: "1px solid gray",
               padding: "0px 8px",
-              width: "80%",
+              width: "100%",
               minHeight: "200px",
             }}
           >
@@ -213,6 +257,7 @@ const VideoEditor = () => {
                     <Droppable droppableId={trackId} direction="horizontal">
                       {(provided, snapshot) => (
                         <div
+                          key={trackId}
                           style={{
                             padding: track.clips.length === 0 ? "2.5px" : "5px",
                             display: "flex",
@@ -229,37 +274,81 @@ const VideoEditor = () => {
                           ref={provided.innerRef}
                         >
                           {track.clips?.map((clipId, index) => (
-                            <Draggable
-                              draggableId={clipId}
+                            <div
+                              className="clip-drag"
                               key={clipId}
-                              index={index}
+                              style={{
+                                position: "relative",
+                                left: `${
+                                  data.clips[clipId].startNew -
+                                  data.clips[clipId].start
+                                }px`,
+                              }}
                             >
-                              {(provided, snapshot) => (
-                                <div
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  ref={provided.innerRef}
-                                >
+                              <div
+                                onMouseDown={handler.bind(
+                                  null,
+                                  clipId,
+                                  "startNew"
+                                )}
+                                className="clip-drag-front"
+                              />
+                              <Draggable
+                                draggableId={clipId}
+                                key={clipId}
+                                index={index}
+                              >
+                                {(provided, snapshot) => (
                                   <div
-                                    style={{
-                                      border: "1px solid gray",
-                                      padding: "5px 15px",
-                                      background: `${
-                                        snapshot.isDragging
-                                          ? "lightblue"
-                                          : "white"
-                                      }`,
-                                      width: `${
-                                        data.clips[clipId].end -
-                                        data.clips[clipId].start
-                                      }px`,
-                                    }}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    ref={provided.innerRef}
                                   >
-                                    {data.clips[clipId].content}
+                                    <div
+                                      style={{
+                                        border: "1px solid gray",
+                                        background: `${
+                                          snapshot.isDragging
+                                            ? "lightblue"
+                                            : "white"
+                                        }`,
+                                        width: `${
+                                          (data.clips[clipId].endNew ||
+                                            data.clips[clipId].end) -
+                                          (data.clips[clipId].startNew ||
+                                            data.clips[clipId].start)
+                                        }px`,
+                                        overflow: "hidden",
+                                        height: "24px",
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          textAlign: "center",
+                                        }}
+                                      >
+                                        <span style={{ fontSize: "12px" }}>
+                                          {data.clips[clipId].content}-
+                                          {(data.clips[clipId].endNew ||
+                                            data.clips[clipId].end) -
+                                            (data.clips[clipId].startNew ||
+                                              data.clips[clipId].start)}
+                                          s
+                                        </span>
+                                      </div>
+                                    </div>
                                   </div>
-                                </div>
-                              )}
-                            </Draggable>
+                                )}
+                              </Draggable>
+                              <div
+                                onMouseDown={handler.bind(
+                                  null,
+                                  clipId,
+                                  "endNew"
+                                )}
+                                className="clip-drag-end"
+                              />
+                            </div>
                           ))}
                           {provided.placeholder}
                         </div>
