@@ -53,9 +53,9 @@ const initialData: DataType = {
     "clip-2-0.8634497206492759": {
       content: "yellow",
       start: 1,
-      end: 30,
+      end: 188,
       startNew: 1,
-      endNew: 30,
+      endNew: 188,
     },
   },
   tracks: {
@@ -280,6 +280,10 @@ const VideoEditor = () => {
                               style={{
                                 position: "relative",
                                 left: `${
+                                  data.clips[clipId].startNew -
+                                  data.clips[clipId].start
+                                }px`,
+                                paddingRight: `${
                                   data.clips[clipId].startNew -
                                   data.clips[clipId].start
                                 }px`,
